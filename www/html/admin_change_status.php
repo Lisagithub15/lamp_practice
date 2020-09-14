@@ -4,14 +4,24 @@ require_once MODEL_PATH . 'functions.php';
 require_once MODEL_PATH . 'user.php';
 require_once MODEL_PATH . 'item.php';
 
+// セッション開始
 session_start();
 
+if (is_valid_csrf_token($_POST['token']) === false) {
+  redirect_to(LOGIN_URL);
+} 
+
+
+// ログインされていない場合
 if(is_logined() === false){
   redirect_to(LOGIN_URL);
 }
 
+// 既にログインされている場合
+// 定義
 $db = get_db_connect();
 
+// ユーザーの情報を取得
 $user = get_login_user($db);
 
 if(is_admin($user) === false){
