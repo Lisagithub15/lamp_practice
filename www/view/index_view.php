@@ -43,6 +43,31 @@
       </div>
     </div>
   </div>
-  
+  <div>
+  <?php if(count($rankings) > 0){ ?>
+  <h1>ランキング</h1>
+      <table class="table table-bordered text-center">
+        <thead class="thead-light">
+          <tr>
+            <th>順位</th>
+            <th>商品画像</th>
+            <th>商品名</th>
+          </tr>
+        </thead>
+        <tbody>
+            <?php foreach($top3 as $rank => $top3s) { ?>
+          <!-- <tr class="<?php print(is_open($item) ? '' : 'close_item'); ?>"> -->
+            <td><?php print $ranks = $rank + 1 ; ?>位</td>
+            <td><img src="<?php print h(IMAGE_PATH . $top3s['image']);?>" class="item_image"></td>
+            <td><?php print h($top3s['name']); ?></td>
+          </tr>
+          <?php } ?>
+        </tbody>
+      </table>
+    <?php } else { ?>
+      <p>ランキング準備中です</p>
+    <?php } ?> 
+  </div> 
+
 </body>
 </html>

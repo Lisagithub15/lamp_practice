@@ -17,6 +17,14 @@ $user = get_login_user($db);
 
 $items = get_open_items($db);
 
+//商品ランキング
+$rankings = get_ranking($db);
+$top3 = array_slice($rankings, 0, 3);
+// $rank[0] = 1;
+// $rank[1] = 2;
+// $rank[2] = 3;
+
+
 $token = get_csrf_token();
 
 include_once VIEW_PATH . 'index_view.php';
