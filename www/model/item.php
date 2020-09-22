@@ -144,6 +144,28 @@ function delete_item($db, $item_id){
   return execute_query($db, $sql, array($item_id));
 }
 
+function get_ranking($db){
+  $sql = "
+  SELECT
+  SUM(amount),
+  details.item_id,
+  name,
+  image
+  FROM
+  details
+  JOIN
+  items
+  ON
+  items.item_id=details.item_id
+  GROUP BY
+  item_id
+  ORDER BY
+  sum(amount) DESC
+  ";
+  return fetch_all_query($db, $sql);
+}
+
+
 
 // 非DB
 

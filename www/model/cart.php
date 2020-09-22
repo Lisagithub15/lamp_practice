@@ -2,6 +2,7 @@
 require_once MODEL_PATH . 'functions.php';
 require_once MODEL_PATH . 'db.php';
 
+// ユーザーのカゴの中身の取得
 function get_user_carts($db, $user_id){
   $sql = "
     SELECT
@@ -104,8 +105,11 @@ function delete_cart($db, $cart_id){
 function purchase_carts($db, $carts){
   if(validate_cart_purchase($carts) === false){
     return false;
-  }
+  } 
+  add_history($db, $carts[0]['user_id']); 
+  $order_id = $db->lastInsertId('order_id');
   foreach($carts as $cart){
+    add_details($db, $cart['item_id'], $cart['price'], $cart['amount'], $order_id);
     if(update_item_stock(
         $db, 
         $cart['item_id'], 
@@ -116,6 +120,32 @@ function purchase_carts($db, $carts){
   }
   
   delete_user_carts($db, $carts[0]['user_id']);
+}
+
+function add_history($db, $user_id){
+  // 追加する処理
+  $sql = "
+    INSERT INTO
+      history(user_id)
+    VALUES(?)
+  ";
+
+  return execute_query($db, $sql, array($user_id));
+}
+
+function add_details($db, $item_id, $price, $amount, $order_id){
+  // 追加する処理
+  $sql = "
+    INSERT INTO
+      details(
+        item_id,
+        buy_price,
+        amount,
+        order_id
+      )
+    VALUES(?, ?, ?, ?)
+  ";
+  return execute_query($db, $sql, array($item_id, $price, $amount, $order_id));
 }
 
 function delete_user_carts($db, $user_id){
@@ -129,6 +159,99 @@ function delete_user_carts($db, $user_id){
   execute_query($db, $sql, array($user_id));
 }
 
+
+function get_all_history($db){
+  $sql = "
+  SELECT
+  history.order_id,
+  purchase_date,
+  sum(buy_price*amount) as total
+  FROM
+  history
+  JOIN
+  details
+  ON
+  history.order_id = details.order_id
+  GROUP BY
+  history.order_id
+  ";
+  return fetch_all_query($db, $sql);
+}
+
+
+function get_history($db, $user_id){
+  // if(is_admin($user) === false){
+  $sql = "
+  SELECT
+  history.order_id,
+  purchase_date,
+  sum(buy_price*amount) as total
+  FROM
+  history
+  JOIN
+  details
+  ON
+  history.order_id = details.order_id
+  WHERE
+  user_id = ?
+  GROUP BY
+  history.order_id
+  ";
+  return fetch_all_query($db, $sql, array($user_id));
+}
+
+
+function get_details($db, $order_id){
+  $sql = "
+  SELECT
+  items.name,
+  buy_price,
+  amount,
+  amount*buy_price as sub_total
+  FROM
+  details
+  JOIN
+  items
+  ON
+  details.item_id=items.item_id
+  WHERE
+  order_id=?
+
+  ";
+  return fetch_all_query($db, $sql, array($order_id));
+}
+
+function get_sub_details($db, $order_id){
+  $sql = "
+  SELECT
+  history.order_id,
+  purchase_date,
+  sum(buy_price*amount) as total
+  FROM
+  history
+  JOIN
+  details
+  ON
+  history.order_id = details.order_id
+  WHERE
+  history.order_id = ?
+  GROUP BY
+  history.order_id
+  ";
+  return fetch_query($db, $sql, array($order_id));
+}
+
+function get_order_page($db, $order_id){
+  $sql = "
+  SELECT
+  user_id
+  FROM
+  history
+  WHERE
+  order_id = ?
+";
+return fetch_query($db, $sql, array($order_id));
+}
 
 function sum_carts($carts){
   $total_price = 0;
